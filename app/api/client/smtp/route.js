@@ -4,59 +4,70 @@ import SmtpConfig from '@/models/SmtpConfig';
 import User from '@/models/User';
 import { verifySmtpConfig } from '@/lib/smtp-verification';
 
-export async function POST(req) {
-  const userId = req.headers.get('x-user-id');
-  if (!userId) {
+// GET existing SMTP configuration
+export async function GET(request) {
+  try {
+    const userId = request.headers.get("x-user-id");
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized", success: false },
+        { status: 401 }
+      );
+    }
+
+    await connectDB();
+    const smtpConfig = await SmtpConfig.findOne({ user: userId });
+
+    if (!smtpConfig) {
+      return NextResponse.json({ smtpConfig: null ,success:true});
+    }
+
+    return NextResponse.json({
+      smtpConfig: {
+        host: smtpConfig.host,
+        port: smtpConfig.port,
+        secure: smtpConfig.secure,
+        username: smtpConfig.username,
+        provider: smtpConfig.provider,
+      }
+      ,success:true
+    });
+  } catch (error) {
+    console.error('Error fetching SMTP config:', error);
     return NextResponse.json(
-      { error: 'Unauthorized', success: false },
-      { status: 401 }
+      { error: 'Failed to fetch SMTP configuration',success:false },
+      { status: 500 }
     );
   }
-  try {
-    await connectDB();
+}
 
-    const { host, port, secure, username, password, provider } = await req.json();
+// POST create or update SMTP configuration
+export async function POST(request) {
+  try {
+    const userId = request.headers.get("x-user-id");
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized", success: false },
+        { status: 401 }
+      );
+    }
+
+    const { host, port, secure, username, password, provider } = await request.json();
 
     if (!host || !port || !username || !password || !provider) {
       return NextResponse.json(
-        { error: 'Missing required fields', success: false },
+        { error: 'Missing required fields' ,success:false},
         { status: 400 }
       );
     }
 
-    // Verify SMTP configuration
-    const verificationResult = await verifySmtpConfig({
-      host,
-      port,
-      secure,
-      username,
-      password,
-    });
+    await connectDB();
 
-    if (!verificationResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Invalid SMTP configuration. Please check your credentials and try again.',
-          success: false,
-          details: verificationResult.error
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if user exists
-    const user = await User.findById(userId);
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found', success: false },
-        { status: 404 }
-      );
-    }
-
-    // Create or update SMTP config
+    // Check if SMTP config already exists
     let smtpConfig = await SmtpConfig.findOne({ user: userId });
-    
+
     if (smtpConfig) {
+      // Update existing config
       smtpConfig.host = host;
       smtpConfig.port = port;
       smtpConfig.secure = secure;
@@ -65,8 +76,9 @@ export async function POST(req) {
       smtpConfig.provider = provider;
       await smtpConfig.save();
     } else {
+      // Create new config
       smtpConfig = await SmtpConfig.create({
-        user: userId,
+        user: session.user.id,
         host,
         port,
         secure,
@@ -74,61 +86,22 @@ export async function POST(req) {
         password,
         provider,
       });
-      
-      // Update user's SMTP reference
-      user.smtp = smtpConfig._id;
-      await user.save();
     }
 
     return NextResponse.json({
-      success: true,
-      message: 'SMTP configuration verified and saved successfully',
       smtpConfig: {
-        ...smtpConfig.toObject(),
-        password: undefined // Don't send password back
+        host: smtpConfig.host,
+        port: smtpConfig.port,
+        secure: smtpConfig.secure,
+        username: smtpConfig.username,
+        provider: smtpConfig.provider,
       },
+      success: true,
     });
   } catch (error) {
-    console.error('Error saving SMTP config:', error);
+    console.error("Error saving SMTP config:", error);
     return NextResponse.json(
-      { error: 'Internal server error', success: false },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(req) {
-  try {
-    await connectDB();
-
-    const userId = req.headers.get('x-user-id');
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized', success: false },
-        { status: 401 }
-      );
-    }
-
-    const smtpConfig = await SmtpConfig.findOne({ user: userId });
-    
-    if (!smtpConfig) {
-      return NextResponse.json(
-        { error: 'SMTP configuration not found', success: false },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      smtpConfig: {
-        ...smtpConfig.toObject(),
-        password: undefined // Don't send password back
-      },
-    });
-  } catch (error) {
-    console.error('Error fetching SMTP config:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', success: false },
+      { error: 'Failed to save SMTP configuration' ,success:false},
       { status: 500 }
     );
   }
