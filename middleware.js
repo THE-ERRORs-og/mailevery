@@ -1,25 +1,58 @@
-import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 export async function middleware(req) {
-  const token = await getToken({ 
+  const url = new URL(req.url);
+  const pathname = url.pathname;
+
+  const isServiceApi = pathname.startsWith("/api/services");
+
+  // API key handling for /api/services routes
+  if (isServiceApi) {
+    const apiKeyFromHeader = req.headers.get("x-api-key");
+    const apiKeyFromQuery = url.searchParams.get("x-api-key");
+
+    const apiKey = apiKeyFromHeader || apiKeyFromQuery;
+
+    if (!apiKey) {
+      return new NextResponse(
+        JSON.stringify({
+          success: false,
+          message: "API key missing",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Add x-api-key to headers
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-api-key", apiKey);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  // Authenticated routes using next-auth
+  const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
   });
   const isAuthenticated = !!token;
 
-  // If the user is not authenticated, redirect to signin
   if (!isAuthenticated) {
-    return NextResponse.redirect(new URL('/auth/signin', req.url));
+    return NextResponse.redirect(new URL("/auth/signin", req.url));
   }
 
-  // Add user ID to request headers
   const requestHeaders = new Headers(req.headers);
-  // requestHeaders.set('x-user-id', token.sub);
   requestHeaders.set("x-user-id", token.id);
   requestHeaders.set("x-user-name", token.name);
 
-  // Return response with modified headers
   return NextResponse.next({
     request: {
       headers: requestHeaders,
@@ -27,10 +60,6 @@ export async function middleware(req) {
   });
 }
 
-// Configure which paths the middleware should run on
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/api/client/:path*',
-  ],
-}; 
+  matcher: ["/dashboard/:path*", "/api/client/:path*", "/api/services/:path*"],
+};

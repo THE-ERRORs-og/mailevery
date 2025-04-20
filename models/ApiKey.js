@@ -39,4 +39,15 @@ apiKeySchema.methods.incrementUsage = async function() {
   await this.save();
 };
 
-export default mongoose.models.ApiKey || mongoose.model('ApiKey', apiKeySchema); 
+// Static method to find an API key and its associated user
+apiKeySchema.statics.findByKey = async function(apiKey) {
+  if (!apiKey) return null;
+  
+  const keyDoc = await this.findOne({ key: apiKey, active: true });
+  if (!keyDoc) return null;
+  
+  await keyDoc.populate('user');
+  return keyDoc;
+};
+
+export default mongoose.models.ApiKey || mongoose.model('ApiKey', apiKeySchema);
