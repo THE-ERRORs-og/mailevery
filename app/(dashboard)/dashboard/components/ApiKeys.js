@@ -135,7 +135,7 @@ export default function ApiKeys() {
           <div>
             <label
               htmlFor="key-name"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-indigo-800"
             >
               Key Name
             </label>
@@ -182,7 +182,7 @@ export default function ApiKeys() {
                   {newKey}
                 </code>
               </div>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-indigo-600">
                 Make sure to copy your API key now. You won't be able to see it
                 again!
               </p>
@@ -198,7 +198,7 @@ export default function ApiKeys() {
         </div>
         <div className="divide-y divide-gray-200">
           {apiKeys.length === 0 ? (
-            <div className="px-6 py-4 text-center text-gray-500">
+            <div className="px-6 py-4 text-center text-indigo-600">
               No API keys found. Create one to get started.
             </div>
           ) : (
@@ -212,7 +212,7 @@ export default function ApiKeys() {
                     <p className="text-sm font-medium text-gray-900">
                       {apiKey.name}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-indigo-600">
                       Created on{" "}
                       {new Date(apiKey.createdAt).toLocaleDateString()}
                     </p>
@@ -251,4 +251,4 @@ export default function ApiKeys() {
       </div>
     </div>
   );
-} 
+}

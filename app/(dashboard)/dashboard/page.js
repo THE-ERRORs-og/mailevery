@@ -1,39 +1,44 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import SmtpConfig from './components/SmtpConfig';
-import EmailTemplates from './components/EmailTemplates';
-import TestEmail from './components/TestEmail';
-import EmailLogs from './components/EmailLogs';
-import ApiKeys from './components/ApiKeys';
-import ContactGroups from './components/ContactGroups';
+import { useState } from "react";
+import { SessionProvider } from "next-auth/react";
+import SmtpConfig from "./components/SmtpConfig";
+import EmailTemplates from "./components/EmailTemplates";
+import TestEmail from "./components/TestEmail";
+import EmailLogs from "./components/EmailLogs";
+import ApiKeys from "./components/ApiKeys";
+import ContactGroups from "./components/ContactGroups";
+import ApiDocs from "./components/ApiDocs";
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('smtp');
+  const [activeTab, setActiveTab] = useState("smtp");
 
   const tabs = [
-    { id: 'smtp', name: 'SMTP Configuration' },
-    { id: 'templates', name: 'Email Templates' },
-    { id: 'test', name: 'Test Email' },
-    { id: 'logs', name: 'Email Logs' },
-    { id: 'api-keys', name: 'API Keys' },
-    { id: 'contact-groups', name: 'Contact Groups' },
+    { id: "smtp", name: "SMTP Configuration" },
+    { id: "templates", name: "Email Templates" },
+    { id: "test", name: "Test Email" },
+    { id: "logs", name: "Email Logs" },
+    { id: "api-keys", name: "API Keys" },
+    { id: "contact-groups", name: "Contact Groups" },
+    { id: "api-docs", name: "API Documentation" },
   ];
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'smtp':
+      case "smtp":
         return <SmtpConfig />;
-      case 'templates':
+      case "templates":
         return <EmailTemplates />;
-      case 'test':
+      case "test":
         return <TestEmail />;
-      case 'logs':
+      case "logs":
         return <EmailLogs />;
-      case 'api-keys':
+      case "api-keys":
         return <ApiKeys />;
-      case 'contact-groups':
+      case "contact-groups":
         return <ContactGroups />;
+      case "api-docs":
+        return <ApiDocs />;
       default:
         return null;
     }
@@ -52,13 +57,13 @@ export default function Dashboard() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`
-                      whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
-                      ${
-                        activeTab === tab.id
-                          ? 'border-indigo-500 text-indigo-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }
-                    `}
+                        whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+                        ${
+                          activeTab === tab.id
+                            ? "border-indigo-500 text-indigo-600"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }
+                      `}
                   >
                     {tab.name}
                   </button>
@@ -67,12 +72,10 @@ export default function Dashboard() {
             </div>
 
             {/* Content */}
-            <div className="p-6">
-              {renderContent()}
-            </div>
+            <div className="p-6">{renderContent()}</div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

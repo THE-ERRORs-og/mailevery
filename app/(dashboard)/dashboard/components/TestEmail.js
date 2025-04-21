@@ -114,7 +114,7 @@ export default function TestEmail() {
         )}
         <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
           <div className="sm:col-span-3">
-            <label htmlFor="to" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="to" className="block text-sm font-medium text-gray-900">
               Recipient Email
             </label>
             <input
@@ -130,7 +130,7 @@ export default function TestEmail() {
           </div>
 
           <div className="sm:col-span-3">
-            <label htmlFor="template" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="template" className="block text-sm font-medium text-gray-900">
               Template
             </label>
             <select
@@ -152,13 +152,13 @@ export default function TestEmail() {
 
           {selectedTemplate && selectedTemplate.type === 'dynamic' && (
             <div className="sm:col-span-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
                 Template Variables
               </label>
               <div className="space-y-4">
                 {Object.keys(selectedTemplate.variables || {}).map((key) => (
                   <div key={key} className="flex items-center space-x-4">
-                    <label className="block text-sm font-medium text-gray-700 w-24">
+                    <label className="block text-sm font-medium text-gray-900 w-24">
                       {key}
                     </label>
                     <input
@@ -181,13 +181,13 @@ export default function TestEmail() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Email Preview</h3>
             <div className="bg-gray-50 rounded-lg p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Subject</label>
+                <label className="block text-sm font-medium text-gray-900">Subject</label>
                 <div className="mt-1 text-sm text-gray-900 bg-white p-2 rounded border border-gray-300">
                   {preview.subject}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Body</label>
+                <label className="block text-sm font-medium text-gray-900">Body</label>
                 <div className="mt-1 text-sm text-gray-900 bg-white p-2 rounded border border-gray-300 whitespace-pre-wrap">
                   {preview.body}
                 </div>
@@ -210,4 +210,4 @@ export default function TestEmail() {
       </form>
     </div>
   );
-} 
+}

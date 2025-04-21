@@ -19,7 +19,7 @@ export async function POST(request) {
         status: 401
       });
     }
-
+    console.log('User:', user); // Debugging line
     // Parse request body using parseRequest
     const { templateId, to, data = {} } = await parseRequest(request);
 
