@@ -20,6 +20,39 @@ export async function GET(request) {
     // Parse request using the parseRequest utility
     const params = await parseRequest(request);
     
+    // Check if template name is provided
+    if (params.name) {
+      // Find template by name (case insensitive)
+      const template = await EmailTemplate.findOne({ 
+        user: user._id, 
+        name: { $regex: new RegExp(`^${params.name}$`, 'i') } 
+      });
+
+      if (!template) {
+        return errorResponse({
+          message: 'Template not found',
+          status: 404
+        });
+      }
+
+      // Get usage information (without incrementing count)
+      const usageInfo = await checkEmailUsage(user, 0);
+      
+      return successResponse({
+        message: 'Template retrieved successfully',
+        data: {
+          template,
+          usage: usageInfo.success ? {
+            sent: usageInfo.sent,
+            limit: usageInfo.limit,
+            remaining: usageInfo.remaining
+          } : {
+            error: 'Could not retrieve usage information'
+          }
+        }
+      });
+    }
+    
     // Get pagination parameters
     const limit = parseInt(params.limit) || 50;
     const page = parseInt(params.page) || 1;

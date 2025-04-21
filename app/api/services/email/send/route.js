@@ -21,13 +21,13 @@ export async function POST(request) {
     }
     console.log('User:', user); // Debugging line
     // Parse request body using parseRequest
-    const { templateId, to, data = {} } = await parseRequest(request);
+    const { templateName, to, data = {} } = await parseRequest(request);
 
     // Validate required fields
-    if (!templateId || !to) {
+    if (!templateName || !to) {
       return errorResponse({
-        message: 'Required fields missing: templateId and to are required',
-        status: 400
+        message: "Required fields missing: templateName and to are required",
+        status: 400,
       });
     }
 
@@ -42,9 +42,9 @@ export async function POST(request) {
     }
 
     // Get template
-    const template = await EmailTemplate.findOne({ 
-      _id: templateId, 
-      user: user._id 
+    const template = await EmailTemplate.findOne({
+      user: user._id,
+      name: { $regex: new RegExp(`^${templateName}$`, "i") },
     });
 
     if (!template) {
@@ -76,20 +76,20 @@ export async function POST(request) {
     });
 
     return successResponse({
-      message: 'Email queued successfully',
+      message: "Email queued successfully",
       data: {
         jobId: job.id,
         emailQueued: {
           to,
           subject: template.subject,
-          templateId
+          templateName
         },
         usage: {
           sent: usageCheck.sent + 1,
           limit: usageCheck.limit,
-          remaining: usageCheck.remaining
-        }
-      }
+          remaining: usageCheck.remaining,
+        },
+      },
     });
     
   } catch (error) {
