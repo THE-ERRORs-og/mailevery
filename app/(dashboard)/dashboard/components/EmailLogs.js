@@ -19,38 +19,38 @@ export default function EmailLogs() {
   const [statusCounts, setStatusCounts] = useState({});
 
   useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const queryParams = new URLSearchParams({
+          page,
+          ...filters,
+        });
+
+        const response = await fetch(`/api/client/logs?${queryParams}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch logs');
+        }
+
+        setLogs(data.logs);
+        setTemplates(data.templates);
+        setStatusCounts(
+          (data.statusCounts ?? []).reduce((acc, { _id, count }) => {
+            acc[_id] = count;
+            return acc;
+          }, {})
+        );
+        setTotalPages(data.pagination.pages);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchLogs();
   }, [page, filters]);
-
-  const fetchLogs = async () => {
-    try {
-      const queryParams = new URLSearchParams({
-        page,
-        ...filters,
-      });
-
-      const response = await fetch(`/api/client/logs?${queryParams}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch logs');
-      }
-
-      setLogs(data.logs);
-      setTemplates(data.templates);
-      setStatusCounts(
-        (data.statusCounts ?? []).reduce((acc, { _id, count }) => {
-          acc[_id] = count;
-          return acc;
-        }, {})
-      );
-      setTotalPages(data.pagination.pages);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
@@ -255,4 +255,4 @@ export default function EmailLogs() {
       )}
     </div>
   );
-} 
+}

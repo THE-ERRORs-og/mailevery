@@ -19,8 +19,26 @@ export default function TestEmail() {
   }, []);
 
   useEffect(() => {
+    const updatePreview = () => {
+      const selectedTemplate = templates.find(t => t._id === testEmail.templateId);
+      if (!selectedTemplate) return;
+  
+      let subject = selectedTemplate.subject;
+      let body = selectedTemplate.body;
+  
+      if (selectedTemplate.type === 'dynamic') {
+        Object.entries(testEmail.variables).forEach(([key, value]) => {
+          const regex = new RegExp(`{${key}}`, 'g');
+          subject = subject.replace(regex, value);
+          body = body.replace(regex, value);
+        });
+      }
+  
+      setPreview({ subject, body });
+    };
+
     updatePreview();
-  }, [testEmail.templateId, testEmail.variables]);
+  }, [testEmail.templateId, testEmail.variables, templates]);
 
   const fetchTemplates = async () => {
     try {
@@ -32,24 +50,6 @@ export default function TestEmail() {
     } catch (error) {
       console.error('Error fetching templates:', error);
     }
-  };
-
-  const updatePreview = () => {
-    const selectedTemplate = templates.find(t => t._id === testEmail.templateId);
-    if (!selectedTemplate) return;
-
-    let subject = selectedTemplate.subject;
-    let body = selectedTemplate.body;
-
-    if (selectedTemplate.type === 'dynamic') {
-      Object.entries(testEmail.variables).forEach(([key, value]) => {
-        const regex = new RegExp(`{${key}}`, 'g');
-        subject = subject.replace(regex, value);
-        body = body.replace(regex, value);
-      });
-    }
-
-    setPreview({ subject, body });
   };
 
   const handleTestEmailSubmit = async (e) => {

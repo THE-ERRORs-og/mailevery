@@ -67,7 +67,7 @@ export default function ApiKeys() {
   };
 
   const handleDeleteKey = async (id) => {
-    if (!confirm('Are you sure you want to delete this API key?')) {
+    if (!confirm("Are you sure you want to delete this API key?")) {
       return;
     }
 
@@ -183,7 +183,7 @@ export default function ApiKeys() {
                 </code>
               </div>
               <p className="mt-2 text-sm text-indigo-600">
-                Make sure to copy your API key now. You won't be able to see it
+                Make sure to copy your API key now. You won&apos;t be able to see it
                 again!
               </p>
             </div>
