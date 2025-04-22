@@ -3,11 +3,13 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import Plan from '@/models/Plan';
+import { parseRequest } from '@/lib/service_utils/parseRequest';
 
 export async function POST(req) {
   try {
     await connectDB();
-    const { name, email, password } = await req.json();
+    console.log('request arrived for signup');
+    const { name, email, password } = await parseRequest(req);
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -15,7 +17,7 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
+    console.log('object', { name, email, password });
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(

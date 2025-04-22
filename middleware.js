@@ -5,6 +5,11 @@ export async function middleware(req) {
   const url = new URL(req.url);
   const pathname = url.pathname;
 
+  const isSignupOrSignin = pathname.startsWith("/api/client/auth");
+  if (isSignupOrSignin) {
+    return NextResponse.next();
+  }
+
   const isServiceApi = pathname.startsWith("/api/services");
 
   // API key handling for /api/services routes
