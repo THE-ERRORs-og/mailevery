@@ -1,14 +1,14 @@
 version: 1
 services:
-  - type: web
-    name: mailing-service-web
+  - type: worker
+    name: mailing-service-worker
     env: node
     branch: main
     buildCommand: npm install && npm run build
-    startCommand: npm run start
-    healthCheckPath: /
+    startCommand: npm run render-worker
     plan: free
     envVars:
+      # all your ENV variables here too!
       - key: MONGODB_URI
         sync: false
       - key: NEXTAUTH_SECRET
@@ -30,15 +30,15 @@ services:
       - key: NEXT_PUBLIC_RUN_WORKER_IN_PR
         sync: false
 
-  - type: worker
-    name: mailing-service-worker
+  - type: web
+    name: mailing-service-web
     env: node
     branch: main
     buildCommand: npm install && npm run build
-    startCommand: npm run render-worker
+    startCommand: npm run start
+    healthCheckPath: /
     plan: free
     envVars:
-      # all your ENV variables here too!
       - key: MONGODB_URI
         sync: false
       - key: NEXTAUTH_SECRET
