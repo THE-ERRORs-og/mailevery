@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "worker": "node scripts/emailWorker.js",
-    "dev:worker": "nodemon scripts/emailWorker.js"
+    "dev:worker": "nodemon scripts/emailWorker.js",
+    "render-worker": "node scripts/render-worker.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

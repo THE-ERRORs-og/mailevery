@@ -1,60 +1,61 @@
+version: 1
 services:
-  # Web service (Next.js application)
   - type: web
-    name: mailevery-web
+    name: mailing-service-web
     env: node
+    branch: main
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: npm run start
+    healthCheckPath: /
+    plan: free
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 10000
       - key: MONGODB_URI
-        fromDatabase:
-          name: mailevery-db
-          property: connectionString
-      - key: NEXTAUTH_URL
         sync: false
       - key: NEXTAUTH_SECRET
-        generateValue: true
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
       - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: mailevery-redis
-          property: host
+        sync: false
+      - key: REDIS_URL
+        sync: false
       - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: mailevery-redis
-          property: port
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_DB
+        sync: false
+      - key: WORKER_CONCURRENCY
+        sync: false
+      - key: NEXT_PUBLIC_RUN_WORKER_IN_PR
+        sync: false
 
-  # Worker service (for email queue processing)
   - type: worker
-    name: mailevery-worker
+    name: mailing-service-worker
     env: node
-    buildCommand: npm install
-    startCommand: npm run worker
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: MONGODB_URI
-        fromDatabase:
-          name: mailevery-db
-          property: connectionString
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: mailevery-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: mailevery-redis
-          property: port
-
-databases:
-  - name: mailevery-db
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: npm run render-worker
     plan: free
-    type: mongodb
-    ipAllowList: [] # allow all
+    envVars:
+      # all your ENV variables here too!
+      - key: MONGODB_URI
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: REDIS_PORT
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_DB
+        sync: false
+      - key: WORKER_CONCURRENCY
+        sync: false
+      - key: NEXT_PUBLIC_RUN_WORKER_IN_PR
+        sync: false
