@@ -58,9 +58,3 @@ databases:
     plan: free
     type: mongodb
     ipAllowList: [] # allow all
-
-services:
-  - type: redis
-    name: mailevery-redis
-    plan: free
-    ipAllowList: [] # allow all
