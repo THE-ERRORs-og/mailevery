@@ -1,0 +1,66 @@
+services:
+  # Web service (Next.js application)
+  - type: web
+    name: mailevery-web
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: mailevery-db
+          property: connectionString
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: mailevery-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: mailevery-redis
+          property: port
+
+  # Worker service (for email queue processing)
+  - type: worker
+    name: mailevery-worker
+    env: node
+    buildCommand: npm install
+    startCommand: npm run worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        fromDatabase:
+          name: mailevery-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: mailevery-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: mailevery-redis
+          property: port
+
+databases:
+  - name: mailevery-db
+    plan: free
+    type: mongodb
+    ipAllowList: [] # allow all
+
+services:
+  - type: redis
+    name: mailevery-redis
+    plan: free
+    ipAllowList: [] # allow all
