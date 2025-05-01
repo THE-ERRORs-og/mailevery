@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import EmailTemplate from './EmailTemplate.js';
+import ContactGroup from './ContactGroup.js';
 
 const emailLogSchema = new mongoose.Schema(
   {
