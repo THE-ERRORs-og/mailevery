@@ -42,6 +42,8 @@ export async function GET(req) {
 
     // Get logs with pagination
     const logs = await EmailLog.find({ user: userId })
+      .populate('template', 'name')
+      .populate('group', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

@@ -107,6 +107,7 @@ export async function POST(request) {
           user: user._id,
           to: email,
           subject: template.subject,
+          template: template._id,
           body: html,
           type: template.type,
           group: group._id,
