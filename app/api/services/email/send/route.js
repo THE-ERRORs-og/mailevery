@@ -80,9 +80,10 @@ export async function POST(request) {
       to,
       subject: template.subject,
       body: html,
+      template: template._id,
       type: template.type,
-      status: emailResult.messageId ? 'success' : 'failed',
-      error: !emailResult.messageId ? 'Failed to send email' : null
+      status: emailResult.messageId ? "success" : "failed",
+      error: !emailResult.messageId ? "Failed to send email" : null,
     });
 
     if (!emailResult.messageId) {
