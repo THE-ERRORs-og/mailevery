@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/service_utils/validateApiKey";
-import { applyTemplate } from "@/lib/email/sendEmail";
+import { applyTemplate, sendEmail } from "@/lib/email/sendEmail";
 import { parseRequest } from "@/lib/service_utils/parseRequest";
 import { checkEmailUsage } from "@/lib/service_utils/usageManager";
-import emailQueue from "@/lib/queue/emailQueue";
 import EmailTemplate from "@/models/EmailTemplate";
 import ContactGroup from "@/models/ContactGroup";
 import SmtpConfig from "@/models/SmtpConfig";
+import EmailLog from "@/models/EmailLog";
 import { handleError } from "@/lib/service_utils/errorHandler";
 import { successResponse, errorResponse } from "@/lib/service_utils/response";
 
@@ -88,35 +88,75 @@ export async function POST(request) {
         ? template.body
         : applyTemplate(template.body, data);
 
-    // Add each email to the queue
-    const jobIds = [];
+    // Send emails directly instead of using a queue
+    const results = [];
+    const succeededEmails = [];
+    const failedEmails = [];
+
     for (const email of group.emails) {
-      const job = await emailQueue.add(
-        "send-email",
-        {
-          userId: user._id.toString(),
+      try {
+        const emailResult = await sendEmail(smtpConfig, {
           to: email,
           subject: template.subject,
           html,
+          from: smtpConfig.username
+        });
+        
+        // Log the email attempt
+        await EmailLog.create({
+          user: user._id,
+          to: email,
+          subject: template.subject,
+          body: html,
           type: template.type,
-        },
-        {
-          priority: 2, // Slightly lower priority than single emails
-        }
-      );
+          group: group._id,
+          status: emailResult.messageId ? 'success' : 'failed',
+          error: !emailResult.messageId ? 'Failed to send email' : null
+        });
 
-      jobIds.push(job.id);
+        results.push({
+          email,
+          success: !!emailResult.messageId,
+          messageId: emailResult.messageId || null
+        });
+
+        if (emailResult.messageId) {
+          succeededEmails.push(email);
+        } else {
+          failedEmails.push(email);
+        }
+      } catch (error) {
+        // Log failed email
+        await EmailLog.create({
+          user: user._id,
+          to: email,
+          subject: template.subject,
+          body: html,
+          type: template.type,
+          group: group._id,
+          status: 'failed',
+          error: error.message || 'Unknown error'
+        });
+        
+        results.push({
+          email,
+          success: false,
+          error: error.message || 'Unknown error'
+        });
+        failedEmails.push(email);
+      }
     }
 
     return successResponse({
-      message: "Group email queued successfully",
+      message: "Group email processed",
       data: {
-        jobIds,
-        emailsQueued: group.emails.length,
+        results,
+        emailsSent: succeededEmails.length,
+        emailsFailed: failedEmails.length,
         templateName,
         groupName,
         usage: {
-          sent: usageCheck.sent + emailCount,
+          sent: usageCheck.sent + succeededEmails.length,
           limit: usageCheck.limit,
           remaining: usageCheck.remaining,
         },

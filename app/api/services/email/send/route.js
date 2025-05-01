@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { validateApiKey } from '@/lib/service_utils/validateApiKey';
-import { applyTemplate } from '@/lib/email/sendEmail';
+import { applyTemplate, sendEmail } from '@/lib/email/sendEmail';
 import { parseRequest } from '@/lib/service_utils/parseRequest';
 import { checkEmailUsage } from '@/lib/service_utils/usageManager';
-import emailQueue from '@/lib/queue/emailQueue';
 import EmailTemplate from '@/models/EmailTemplate';
 import SmtpConfig from '@/models/SmtpConfig';
+import EmailLog from '@/models/EmailLog';
 import { handleError } from '@/lib/service_utils/errorHandler';
 import { successResponse, errorResponse } from '@/lib/service_utils/response';
 
@@ -19,7 +19,7 @@ export async function POST(request) {
         status: 401
       });
     }
-    console.log('User:', user); // Debugging line
+    
     // Parse request body using parseRequest
     const { templateName, to, data = {} } = await parseRequest(request);
 
@@ -66,20 +66,37 @@ export async function POST(request) {
     // Apply template variables
     const html = applyTemplate(template.body, data);
 
-    // Add job to email queue instead of sending directly
-    const job = await emailQueue.add('send-email', {
-      userId: user._id.toString(),
+    // Send email directly instead of using a queue
+    const emailResult = await sendEmail(smtpConfig, {
       to,
       subject: template.subject,
       html,
-      type: template.type
+      from: smtpConfig.username
     });
 
+    // Log the email attempt
+    await EmailLog.create({
+      user: user._id,
+      to,
+      subject: template.subject,
+      body: html,
+      type: template.type,
+      status: emailResult.messageId ? 'success' : 'failed',
+      error: !emailResult.messageId ? 'Failed to send email' : null
+    });
+
+    if (!emailResult.messageId) {
+      return errorResponse({
+        message: 'Failed to send email',
+        status: 500
+      });
+    }
+
     return successResponse({
-      message: "Email queued successfully",
+      message: "Email sent successfully",
       data: {
-        jobId: job.id,
-        emailQueued: {
+        messageId: emailResult.messageId,
+        emailSent: {
           to,
           subject: template.subject,
           templateName
