@@ -63,13 +63,20 @@ export async function POST(request) {
       });
     }
 
-    // Apply template variables
-    const html = applyTemplate(template.body, data);
+    const subject =
+      template.type === "static"
+        ? template.subject
+        : applyTemplate(template.subject, data);
+
+    const html =
+      template.type === "static"
+        ? template.body
+        : applyTemplate(template.body, data);
 
     // Send email directly instead of using a queue
     const emailResult = await sendEmail(smtpConfig, {
       to,
-      subject: template.subject,
+      subject,
       html,
       from: smtpConfig.username
     });
@@ -78,7 +85,7 @@ export async function POST(request) {
     await EmailLog.create({
       user: user._id,
       to,
-      subject: template.subject,
+      subject,
       body: html,
       template: template._id,
       type: template.type,

@@ -83,6 +83,12 @@ export async function POST(request) {
         status: 404,
       });
     }
+
+    const subject =
+      template.type === "static"
+        ? template.subject
+        : applyTemplate(template.subject, data);
+        
     const html =
       template.type === "static"
         ? template.body
@@ -97,7 +103,7 @@ export async function POST(request) {
       try {
         const emailResult = await sendEmail(smtpConfig, {
           to: email,
-          subject: template.subject,
+          subject,
           html,
           from: smtpConfig.username
         });
@@ -106,7 +112,7 @@ export async function POST(request) {
         await EmailLog.create({
           user: user._id,
           to: email,
-          subject: template.subject,
+          subject,
           template: template._id,
           body: html,
           type: template.type,

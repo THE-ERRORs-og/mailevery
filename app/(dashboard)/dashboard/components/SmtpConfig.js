@@ -1,5 +1,6 @@
 'use client';
 
+import { set } from 'mongoose';
 import { useState, useEffect } from 'react';
 
 export default function SmtpConfig() {
@@ -34,6 +35,16 @@ export default function SmtpConfig() {
           ...data.smtpConfig,
           password: '' // Don't show the password
         });
+      } else {
+        setSmtpConfig({
+          host: 'smtp.gmail.com',
+          port: '587',
+          secure: true,
+          username: '',
+          password: '',
+          provider: 'gmail',
+        });
+        setIsEditing(true); // Allow user to set up SMTP if not already configured
       }
     } catch (error) {
       setError(error.message);

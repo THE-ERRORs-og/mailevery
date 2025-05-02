@@ -78,7 +78,7 @@ export async function POST(request) {
     } else {
       // Create new config
       smtpConfig = await SmtpConfig.create({
-        user: session.user.id,
+        user: userId,
         host,
         port,
         secure,
@@ -86,6 +86,15 @@ export async function POST(request) {
         password,
         provider,
       });
+      const user = await User.findById(userId);
+      if (!user) {
+        return NextResponse.json(
+          { error: 'User not found' ,success:false},
+          { status: 404 }
+        );
+      }
+      user.smtp = smtpConfig._id;
+      await user.save();
     }
 
     return NextResponse.json({

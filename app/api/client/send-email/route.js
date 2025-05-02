@@ -62,7 +62,7 @@ export async function POST(req) {
     // Create transporter and send email
     const transporter = await createTransporter(smtpConfig);
     const result = await sendEmail(transporter, {
-      from: smtpConfig.username,
+      from: `"Esson Group Support" <${smtpConfig.username}>`,
       to,
       subject,
       text: body,
