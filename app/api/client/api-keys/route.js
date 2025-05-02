@@ -44,7 +44,13 @@ export async function POST(req) {
     }
 
     await connectDB();
-
+    const { name } = await req.json();
+    if (!name) {
+      return NextResponse.json(
+        { error: 'Name is required' },
+        { status: 400 }
+      );
+    }
     // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
@@ -59,7 +65,7 @@ export async function POST(req) {
     const apiKey = await ApiKey.create({
       user: userId,
       key,
-      name: `API Key ${new Date().toLocaleDateString()}`,
+      name: name || `API Key ${new Date().toLocaleDateString()}`,
     });
 
     return NextResponse.json({

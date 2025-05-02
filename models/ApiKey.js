@@ -6,6 +6,10 @@ const apiKeySchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  name: {
+    type: String,
+    default: `API Key ${new Date().toLocaleDateString()}`,
+  },
   key: {
     type: String,
     required: true,

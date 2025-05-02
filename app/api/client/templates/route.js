@@ -41,10 +41,15 @@ export async function POST(req) {
     });
 
     if (existingTemplate) {
-      return NextResponse.json(
+      {% comment %} return NextResponse.json(
         { error: 'A template with this name already exists', success: false },
         { status: 400 }
-      );
+      ); {% endcomment %}
+      // Update existing template
+      existingTemplate.subject = subject;
+      existingTemplate.body = body;
+      existingTemplate.type = type || 'static';
+      await existingTemplate.save();
     }
 
     // Create new template
