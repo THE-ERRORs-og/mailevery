@@ -41,10 +41,6 @@ export async function POST(req) {
     });
 
     if (existingTemplate) {
-      {% comment %} return NextResponse.json(
-        { error: 'A template with this name already exists', success: false },
-        { status: 400 }
-      ); {% endcomment %}
       // Update existing template
       existingTemplate.subject = subject;
       existingTemplate.body = body;
