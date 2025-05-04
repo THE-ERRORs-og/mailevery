@@ -1,6 +1,7 @@
 # Use Node.js LTS (Node 20)
 FROM node:20-alpine AS base
 
+FROM base AS deps
 # Set working directory
 WORKDIR /app
 
