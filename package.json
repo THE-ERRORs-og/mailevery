@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start -p $PORT",
+    "start": "concurrently \"npm run web\" \"npm run worker\"",
+    "web": "next start -p $PORT",
     "lint": "next lint",
     "worker": "node scripts/emailWorker.js",
     "dev:worker": "nodemon scripts/emailWorker.js",
@@ -14,6 +15,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "bullmq": "^5.1.1",
+    "concurrently": "^9.1.2",
     "dotenv": "^16.5.0",
     "lucide-react": "^0.503.0",
     "mongoose": "^8.13.2",

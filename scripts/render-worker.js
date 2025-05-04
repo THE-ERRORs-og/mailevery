@@ -33,48 +33,184 @@ mongoose
 
 // Define Models directly here to avoid ES module import issues
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },
-  password: String,
-  plan: { type: mongoose.Schema.Types.ObjectId, ref: "Plan" },
-  smtp: { type: mongoose.Schema.Types.ObjectId, ref: "SmtpConfig" },
-  apiKeys: [{ type: mongoose.Schema.Types.ObjectId, ref: "ApiKey" }],
-  createdAt: { type: Date, default: Date.now },
+  email: {
+    type: String,
+    required: [true, 'Email is required'],
+    unique: true,
+    trim: true,
+    lowercase: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: [true, 'Password is required'],
+  },
+  apiKey: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  smtp: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SmtpConfig',
+  },
+  plan: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Plan',
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+}, {
+  timestamps: true,
 });
 
 const smtpConfigSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  host: { type: String, required: true },
-  port: { type: Number, required: true },
-  secure: { type: Boolean, default: true },
-  username: { type: String, required: true },
-  password: { type: String, required: true },
-  provider: { type: String },
-  createdAt: { type: Date, default: Date.now },
-  lastVerified: { type: Date },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  host: {
+    type: String,
+    required: true,
+  },
+  port: {
+    type: Number,
+    required: true,
+  },
+  secure: {
+    type: Boolean,
+    default: true,
+  },
+  username: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  provider: {
+    type: String,
+    required: true,
+  },
+}, {
+  timestamps: true,
 });
 
-const emailLogSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  to: { type: String, required: true },
-  subject: { type: String, required: true },
-  body: { type: String, required: true },
-  status: { type: String, enum: ["success", "failed"], required: true },
+const emailLogSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    to: {
+      type: String,
+      required: true,
+    },
+    subject: {
+      type: String,
+      required: true,
+    },
+    body: {
+      type: String,
+      required: true,
+    },
+    template: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "EmailTemplate",
+      default: null,
+    },
+    group: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ContactGroup",
+      default: null,
+    },
+    type: {
+      type: String,
+      enum: ["static", "dynamic"],
+      default: "static",
+    },
+    status: {
+      type: String,
+      enum: ["success", "failed"],
+      required: true,
+    },
+    error: {
+      type: String,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const emailTemplateSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  subject: {
+    type: String,
+    required: true,
+  },
+  body: {
+    type: String,
+    required: true,
+  },
   type: {
     type: String,
-    enum: ["direct", "template", "group"],
-    default: "direct",
+    enum: ['static', 'dynamic'],
+    default: 'static',
   },
-  template: { type: mongoose.Schema.Types.ObjectId, ref: "EmailTemplate" },
-  group: { type: mongoose.Schema.Types.ObjectId, ref: "ContactGroup" },
-  error: { type: String },
-  createdAt: { type: Date, default: Date.now },
+}, {
+  timestamps: true,
+});
+
+const contactGroupSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  emails: [{
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true
+  }]
+}, {
+  timestamps: true
 });
 
 // Create models
-const User = mongoose.model("User", userSchema);
-const SmtpConfig = mongoose.model("SmtpConfig", smtpConfigSchema);
-const EmailLog = mongoose.model("EmailLog", emailLogSchema);
+const User = mongoose.model('User', userSchema);
+const SmtpConfig = mongoose.model('SmtpConfig', smtpConfigSchema);
+const EmailLog = mongoose.model('EmailLog', emailLogSchema);
+const EmailTemplate = mongoose.model('EmailTemplate', emailTemplateSchema);
+const ContactGroup = mongoose.model('ContactGroup', contactGroupSchema);
 
 // Define sendEmail function directly here instead of importing
 async function sendEmail(smtpConfig, emailDetails) {
@@ -118,7 +254,7 @@ console.log(`Starting email worker with concurrency: ${concurrency}`);
 const worker = new Worker(
   "email-queue",
   async (job) => {
-    const { userId, to, subject, html, type = "direct" } = job.data;
+    const { userId, to, subject, html,group=null, type = "direct" } = job.data;
 
     try {
       // Get the user and their SMTP config
@@ -147,6 +283,7 @@ const worker = new Worker(
         subject,
         body: html,
         type,
+        group,
         status: "success",
       });
 
@@ -159,6 +296,7 @@ const worker = new Worker(
         subject,
         body: html,
         type,
+        group,
         status: "failed",
         error: error.message || "Unknown error",
       });

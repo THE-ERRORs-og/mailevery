@@ -8,6 +8,7 @@ import SmtpConfig from '@/models/SmtpConfig';
 import EmailLog from '@/models/EmailLog';
 import { handleError } from '@/lib/service_utils/errorHandler';
 import { successResponse, errorResponse } from '@/lib/service_utils/response';
+import emailQueue from '@/lib/queue/emailQueue';
 
 export async function POST(request) {
   try {
@@ -73,25 +74,15 @@ export async function POST(request) {
         ? template.body
         : applyTemplate(template.body, data);
 
-    // Send email directly instead of using a queue
-    const emailResult = await sendEmail(smtpConfig, {
+    // Add job to email queue instead of sending directly
+    const job = await emailQueue.add('send-email', {
+      userId: user._id.toString(),
       to,
       subject,
       html,
-      from: smtpConfig.username
+      type: template.type
     });
 
-    // Log the email attempt
-    await EmailLog.create({
-      user: user._id,
-      to,
-      subject,
-      body: html,
-      template: template._id,
-      type: template.type,
-      status: emailResult.messageId ? "success" : "failed",
-      error: !emailResult.messageId ? "Failed to send email" : null,
-    });
 
     if (!emailResult.messageId) {
       return errorResponse({
@@ -101,12 +92,12 @@ export async function POST(request) {
     }
 
     return successResponse({
-      message: "Email sent successfully",
+      message: "Email queued successfully",
       data: {
-        messageId: emailResult.messageId,
-        emailSent: {
+        jobId: job.id,
+        emailQueued: {
           to,
-          subject: template.subject,
+          subject,
           templateName
         },
         usage: {

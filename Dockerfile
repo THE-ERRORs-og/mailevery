@@ -20,6 +20,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/scripts ./scripts
 
 # Set environment
 ENV NODE_ENV=production
@@ -33,5 +34,5 @@ EXPOSE 3000
 RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nextjs -G nodejs
 USER nextjs
 
-# Start the app correctly
+# Start both Next.js app and email worker
 CMD ["npm", "run", "start"]

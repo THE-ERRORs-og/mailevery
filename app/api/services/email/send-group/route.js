@@ -6,9 +6,9 @@ import { checkEmailUsage } from "@/lib/service_utils/usageManager";
 import EmailTemplate from "@/models/EmailTemplate";
 import ContactGroup from "@/models/ContactGroup";
 import SmtpConfig from "@/models/SmtpConfig";
-import EmailLog from "@/models/EmailLog";
 import { handleError } from "@/lib/service_utils/errorHandler";
 import { successResponse, errorResponse } from "@/lib/service_utils/response";
+import emailQueue from "@/lib/queue/emailQueue";
 
 export async function POST(request) {
   try {
@@ -94,76 +94,37 @@ export async function POST(request) {
         ? template.body
         : applyTemplate(template.body, data);
 
-    // Send emails directly instead of using a queue
-    const results = [];
-    const succeededEmails = [];
-    const failedEmails = [];
+    // Add each email to the queue
+    const jobIds = [];
 
     for (const email of group.emails) {
-      try {
-        const emailResult = await sendEmail(smtpConfig, {
+      const job = await emailQueue.add(
+        "send-email",
+        {
+          userId: user._id.toString(),
           to: email,
           subject,
           html,
-          from: smtpConfig.username
-        });
-        
-        // Log the email attempt
-        await EmailLog.create({
-          user: user._id,
-          to: email,
-          subject,
-          template: template._id,
-          body: html,
-          type: template.type,
           group: group._id,
-          status: emailResult.messageId ? 'success' : 'failed',
-          error: !emailResult.messageId ? 'Failed to send email' : null
-        });
-
-        results.push({
-          email,
-          success: !!emailResult.messageId,
-          messageId: emailResult.messageId || null
-        });
-
-        if (emailResult.messageId) {
-          succeededEmails.push(email);
-        } else {
-          failedEmails.push(email);
+          type: template.type,
+        },
+        {
+          priority: 2, // Slightly lower priority than single emails
         }
-      } catch (error) {
-        // Log failed email
-        await EmailLog.create({
-          user: user._id,
-          to: email,
-          subject: template.subject,
-          body: html,
-          type: template.type,
-          group: group._id,
-          status: 'failed',
-          error: error.message || 'Unknown error'
-        });
-        
-        results.push({
-          email,
-          success: false,
-          error: error.message || 'Unknown error'
-        });
-        failedEmails.push(email);
-      }
+      );
+
+      jobIds.push(job.id);
     }
 
     return successResponse({
-      message: "Group email processed",
+      message: "Group email queued successfully",
       data: {
-        results,
-        emailsSent: succeededEmails.length,
-        emailsFailed: failedEmails.length,
+        jobIds,
+        emailsQueued: group.emails.length,
         templateName,
         groupName,
         usage: {
-          sent: usageCheck.sent + succeededEmails.length,
+          sent: usageCheck.sent + emailCount,
           limit: usageCheck.limit,
           remaining: usageCheck.remaining,
         },
