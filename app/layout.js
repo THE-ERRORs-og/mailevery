@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 // Initialize server components
-initServer();
+// initServer();
 
 export const metadata = {
   title: "Email Service",

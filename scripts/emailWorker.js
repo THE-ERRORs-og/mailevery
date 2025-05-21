@@ -20,6 +20,12 @@ const connection = {
   host: process.env.REDIS_HOST || "localhost",
   port: parseInt(process.env.REDIS_PORT || "6379"),
   password: process.env.REDIS_PASSWORD,
+  retryStrategy: (times) => {
+    // Retry with increasing delay, up to 30 seconds
+    const delay = Math.min(times * 1000, 30000);
+    console.log(`Redis reconnect attempt #${times}, retrying in ${delay}ms`);
+    return delay;
+  },
 };
 
 // MongoDB connection
