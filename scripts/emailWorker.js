@@ -29,13 +29,42 @@ const connection = {
 };
 
 // MongoDB connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
-  });
+// mongoose
+//   .connect(process.env.MONGODB_URI)
+//   .then(() => console.log("MongoDB connected"))
+//   .catch((err) => {
+//     console.error("MongoDB connection error:", err);
+//     process.exit(1);
+//   });
+
+// MongoDB connection URI and options
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/errors-mail';
+const mongoOptions = {};
+
+// Resilient MongoDB connection with retry
+async function connectWithRetry() {
+  try {
+    await mongoose.connect(mongoURI, mongoOptions);
+    console.log("MongoDB connected successfully.");
+  } catch (err) {
+    console.error("MongoDB connection failed. Retrying in 5 seconds...", err);
+    setTimeout(connectWithRetry, 5000);
+  }
+}
+
+// Listen for MongoDB connection events to auto-reconnect
+mongoose.connection.on("disconnected", () => {
+  console.warn("MongoDB disconnected. Attempting to reconnect...");
+  connectWithRetry();
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("MongoDB connection error:", err);
+  // No exit here; connection retry will happen on disconnect event
+});
+
+// Start initial connection
+connectWithRetry();
 
 // Define Models directly here to avoid ES module import issues
 const userSchema = new mongoose.Schema({
@@ -343,3 +372,11 @@ process.on("SIGINT", async () => {
   await mongoose.disconnect();
   process.exit(0);
 });
+
+// Optional: health check for MongoDB connection every 10 seconds
+setInterval(() => {
+  if (mongoose.connection.readyState !== 1) { // 1 = connected
+    console.warn(`MongoDB connection state is ${mongoose.connection.readyState}, reconnecting...`);
+    connectWithRetry();
+  }
+}, 10000);
