@@ -84,7 +84,7 @@ export async function POST(request) {
     });
 
 
-    if (!emailResult.messageId) {
+    if (!job.id) {
       return errorResponse({
         message: 'Failed to send email',
         status: 500
