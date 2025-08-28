@@ -5,10 +5,12 @@ import { checkEmailUsage } from '@/lib/service_utils/usageManager';
 import EmailTemplate from '@/models/EmailTemplate';
 import { handleError } from '@/lib/service_utils/errorHandler';
 import { successResponse, errorResponse } from '@/lib/service_utils/response';
+import connectDB from '@/lib/mongodb';
 
 export async function GET(request) {
   try {
     // Validate API key using the simplified function
+    await connectDB();
     const user = await validateApiKey(request);
     if (!user) {
       return errorResponse({

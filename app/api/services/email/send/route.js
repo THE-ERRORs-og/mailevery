@@ -9,9 +9,11 @@ import EmailLog from '@/models/EmailLog';
 import { handleError } from '@/lib/service_utils/errorHandler';
 import { successResponse, errorResponse } from '@/lib/service_utils/response';
 import emailQueue from '@/lib/queue/emailQueue';
+import connectDB from '@/lib/mongodb';
 
 export async function POST(request) {
   try {
+    await connectDB();
     // Validate API key using the simplified function
     const user = await validateApiKey(request);
     if (!user) {

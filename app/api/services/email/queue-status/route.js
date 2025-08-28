@@ -3,6 +3,7 @@ import { Queue } from 'bullmq';
 import { validateApiKey } from '@/lib/service_utils/validateApiKey';
 import { successResponse, errorResponse } from '@/lib/service_utils/response';
 import { handleError } from '@/lib/service_utils/errorHandler';
+import connectDB from '@/lib/mongodb';
 
 // Redis connection config
 const connection = {
@@ -14,6 +15,7 @@ const connection = {
 export async function GET(request) {
   try {
     // Validate API key
+    await connectDB();
     const user = await validateApiKey(request);
     if (!user) {
       return errorResponse({
