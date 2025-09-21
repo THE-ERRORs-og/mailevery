@@ -4,6 +4,7 @@ import { validateApiKey } from '@/lib/service_utils/validateApiKey';
 import { successResponse, errorResponse } from '@/lib/service_utils/response';
 import { handleError } from '@/lib/service_utils/errorHandler';
 import connectDB from '@/lib/mongodb';
+import { withCorsProtection } from '@/lib/withCorsProtection';
 
 // Redis connection config
 const connection = {
@@ -12,7 +13,7 @@ const connection = {
   password: process.env.REDIS_PASSWORD,
 };
 
-export async function GET(request) {
+export const GET = withCorsProtection(async function GET(request) {
   try {
     // Validate API key
     await connectDB();
@@ -61,4 +62,4 @@ export async function GET(request) {
   } catch (error) {
     return handleError(error);
   }
-}
+});

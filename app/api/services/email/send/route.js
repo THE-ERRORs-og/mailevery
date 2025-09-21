@@ -10,8 +10,9 @@ import { handleError } from '@/lib/service_utils/errorHandler';
 import { successResponse, errorResponse } from '@/lib/service_utils/response';
 import emailQueue from '@/lib/queue/emailQueue';
 import connectDB from '@/lib/mongodb';
+import { withCorsProtection } from '@/lib/withCorsProtection';
 
-export async function POST(request) {
+export const POST = withCorsProtection(async function POST(request) {
   try {
     await connectDB();
     // Validate API key using the simplified function
@@ -113,4 +114,4 @@ export async function POST(request) {
   } catch (error) {
     return handleError(error);
   }
-}
+});

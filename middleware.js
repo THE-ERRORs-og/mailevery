@@ -4,6 +4,7 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(req) {
   const url = new URL(req.url);
   const pathname = url.pathname;
+  const origin = req.headers.get("origin");
 
   const isSignupOrSignin = pathname.startsWith("/api/client/auth");
   if (isSignupOrSignin) {
@@ -12,10 +13,24 @@ export async function middleware(req) {
 
   const isServiceApi = pathname.startsWith("/api/services");
 
+  // ✅ Handle CORS preflight for /api/services
+  if (isServiceApi && req.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 204, // Using 204 for consistency with withCorsProtection
+      headers: {
+        "Access-Control-Allow-Origin": origin || "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, x-api-key",
+        "Access-Control-Max-Age": "86400", // 24 hours
+      },
+    });
+  }
+
   // API key handling for /api/services routes
   if (isServiceApi) {
     const apiKeyFromHeader = req.headers.get("x-api-key");
     const apiKeyFromQuery = url.searchParams.get("x-api-key");
+    const origin = req.headers.get("origin");
 
     const apiKey = apiKeyFromHeader || apiKeyFromQuery;
 

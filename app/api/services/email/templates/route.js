@@ -6,8 +6,9 @@ import EmailTemplate from '@/models/EmailTemplate';
 import { handleError } from '@/lib/service_utils/errorHandler';
 import { successResponse, errorResponse } from '@/lib/service_utils/response';
 import connectDB from '@/lib/mongodb';
+import { withCorsProtection } from '@/lib/withCorsProtection';
 
-export async function GET(request) {
+export const GET = withCorsProtection(async function GET(request) {
   try {
     // Validate API key using the simplified function
     await connectDB();
@@ -96,4 +97,4 @@ export async function GET(request) {
   } catch (error) {
     return handleError(error);
   }
-}
+});

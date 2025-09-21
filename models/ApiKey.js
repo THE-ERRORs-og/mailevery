@@ -27,6 +27,14 @@ const apiKeySchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  domains: {
+    type: [String],
+    default: [],
+  },
+  allowLocalhost: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: true,
 });
